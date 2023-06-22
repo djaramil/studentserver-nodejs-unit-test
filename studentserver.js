@@ -3,8 +3,10 @@
 const express = require('express')
 const app = express()
 const bodyParser = require('body-parser');
-const fs = require('fs');
 const glob = require("glob");
+
+// const fs = require("fs/promises");
+const fs = require("fs");
 const { type } = require('os');
 
 const swaggerJsDoc = require('swagger-jsdoc')
@@ -30,6 +32,23 @@ app.use(express.static('./public'));
 app.use((req, res, next) => {
   res.set('Content-Type', 'application/json');
   next();
+});
+
+// check to see if student directory exists and create if necessary
+const dir = 'students';
+
+fs.access(dir, (err) => {
+  if (err) {
+    fs.mkdir(dir, { mode: 0o755 }, (err) => {
+      if (err) {
+        console.error(err);
+      } else {
+        console.log("Student directory created successfully!");
+      }
+    });
+  } else {
+    console.log("Student directory already exists!");
+  }
 });
 
 /**
@@ -69,6 +88,7 @@ app.use((req, res, next) => {
  *       201:
  *         description: Success. The student object has been created.
  */
+
 app.post('/students', function (req, res) {//creates a new student obj with all of it's attributes.
 
   var record_id = new Date().getTime();
@@ -81,42 +101,29 @@ app.post('/students', function (req, res) {//creates a new student obj with all 
   obj.enrolled = req.body.enrolled;
 
   var str = JSON.stringify(obj, null, 2);
-  const fs = require('fs');
 
-  const dir = 'students';
-
-  fs.access(dir, (err) => {
-    if (err) {
-      fs.mkdir(dir, (err) => {
-        if (err) {
-          console.error(err);
-        } else {
-          console.log('Directory created successfully!');
-        }
-      });
-    } else {
-      console.log('Directory already exists!');
-    }
-    if (checkStudentExists() == false) {
-      fs.writeFile("students/" + record_id + ".json", str, function (err) {//writes to the students directory
-        var rsp_obj = {};
-        if (err) {
-          rsp_obj.record_id = -1;
-          rsp_obj.message = 'error - unable to create resource';
-          return res.status(200).send(rsp_obj);
-        } else {
-          rsp_obj.record_id = record_id;
-          rsp_obj.message = 'successfully created';
-          return res.status(201).send(rsp_obj);
-        }
-      }) //end writeFile method
-    } else {
-      console.log("Student exists")
-    }
-  })
+  if (checkStudentExists(obj.first_name, obj.last_name) == false) {
+    fs.writeFile("students/" + record_id + ".json", str, function (err) {//writes to the students directory
+      var rsp_obj = {};
+      if (err) {
+        rsp_obj.record_id = -1;
+        rsp_obj.message = 'error - unable to create resource';
+        return res.status(400).send(rsp_obj);
+      } else {
+        rsp_obj.record_id = record_id;
+        rsp_obj.message = 'successfully created';
+        return res.status(201).send(rsp_obj);
+      }
+    }) //end writeFile method
+  } else {
+    var rsp_obj = {};
+    console.log("Student exists")
+    rsp_obj.message = 'Student Exists';
+    return res.status(409).send(rsp_obj);
+  }
+})
 
 
-}); //end post method
 /**
  * @swagger
  * /students/{recordid}:
@@ -237,7 +244,6 @@ app.get('/students', function (req, res) {
   console.log("get students")
   var obj = {};
   var arr = [];
-  filesread = 0;
 
   glob("students/*.json", null, function (err, files) {
     if (err) {
@@ -372,22 +378,25 @@ app.delete('/students/:record_id', function (req, res) {
 
 }); //end delete method
 
-function checkStudentExists(files, obj, fname, lname, res) {
-  console.log("checkStudentExists")
-  listOfStudents = obj;
-  for (let recordId in listOfStudents) {
-    let student = listOfStudents[recordId];
+// check for duplicate student
+function checkStudentExists(firstName, lastName) {
+  const files = glob.sync("students/*.json");
+
+  for (const file of files) {
+    const data = fs.readFileSync(file, "utf8");
+    const student = JSON.parse(data);
+
     if (student.first_name === firstName && student.last_name === lastName) {
       return true;
     }
   }
-  return false;
 
+  return false;
 }
 
+const PORT = 5678
 const server = app.listen(5678); //start the server
-//console.log(checkStudentExists("John","Doe",))
-console.log('Server is running...');
+console.log(`Server is running... http://localhost:${PORT}`);
 
 module.exports = {
   server: server,

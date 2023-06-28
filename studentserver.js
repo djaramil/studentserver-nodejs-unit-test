@@ -170,57 +170,7 @@ function readFiles(files, arr, res) {
     }
   });
 }
-// app.get('/students/:record_id', function(req, res) {
-//   var record_id = req.params.record_id;
 
-//   fs.readFile("students/" + record_id + ".json", "utf8", function(err, data) {
-//     if (err) {
-//       var rsp_obj = {};
-//       rsp_obj.record_id = record_id;
-//       rsp_obj.message = 'error - resource not found';
-//       return res.status(404).send(rsp_obj);
-//     } else {
-//       return res.status(200).send(data);
-//     }
-//   });
-// }); 
-// /**
-//  * Reads all the student files from the `students` directory and returns them as an array of objects.
-//  *
-//  * @param {Array<string>} files - An array of file names.
-//  * @param {Array<Object>} arr - An array of student objects.
-//  * @param {Object} res - Express response object.
-//  */
-// function readFiles(files,arr, res) {
-//   console.log(files.length)
-//   fname = files.pop();
-//   if (!fname)
-//     return;
-//   fs.readFile(fname, "utf8", function(err, data) {
-//     if (err) {
-//       return res.status(500).send({"message":"error - internal server error"});
-//     } else {
-//       arr.push(JSON.parse(data));
-//       if (files.length == 0) {
-//         console.log("before recursion")
-//         // console.log(arr)
-//         var obj = {};
-//         obj.students = arr;
-//         checkStudentExists(files, obj, res)
-//         // console.log("after recursion")
-//         // console.log(arr)
-//         return res.status(200).send(obj);
-//       } else {
-//         //console.log("before readFiles")
-//         readFiles(files,arr,res);
-//       }
-//       //console.log("after readFiles")
-
-//      // console.log(arr)
-
-//     }
-//   });  
-// } 
 /**
  * @swagger
  * /students:
@@ -386,7 +336,6 @@ function checkStudentExists(files, obj, fname, lname, res) {
 }
 
 const server = app.listen(5678); //start the server
-//console.log(checkStudentExists("John","Doe",))
 console.log('Server is running...');
 
 module.exports = {
